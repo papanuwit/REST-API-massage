@@ -80,7 +80,7 @@ app.post("/login", async (req, res) => {
   );
 });
 
-//get all customers
+//get all customers in table 
 app.get("/customers", async (req, res) => {
   connection.query("SELECT * FROM `customers`", (err, result, fields) => {
     if (err) {
