@@ -504,14 +504,34 @@ app.put("/review/:id", async (req, res) => {
 
 //ดึงโปรไฟล์ที่คล้ายกัน
 app.get("/recomandtaion/:age/:gender", async (req, res) => {
+  let query = "";
+
+  let age = req.params.age;
+  let gender = req.params.gender;
+
+  if (age >= 18 && age <= 25) {
+    query = "SELECT customerId,age,gender FROM customers WHERE age BETWEEN 18 AND 25";
+  } else if (age >= 26 && age <= 35) {
+    query = "SELECT customerId,age,gender FROM customers WHERE age BETWEEN 26 AND 35";
+  } else if (age >= 36 && age <= 45) {
+    query = "SELECT customerId,age,gender FROM customers WHERE age BETWEEN 36 AND 45";
+  } else if (age >= 46 && age <= 60) {
+    query = "SELECT customerId,age,gender FROM customers WHERE age BETWEEN 46 AND 60";
+  } else {
+    query = "SELECT customerId,age,gender FROM customers WHERE age =? AND gender=?";
+
+  }
+
   connection.query(
-    "SELECT customerId,age,gender FROM customers WHERE age >=? AND gender=?",
-    [req.params.age,req.params.gender],
+    query
+    ,
+    [age, gender],
     (err, result) => {
       if (err) {
-        return res.status(400).send();
+        res.status(400).send();
       }
-      res.status(200).json(result);
+      let newData = result?.filter(obj => obj.gender === gender);
+      res.status(200).json(newData);
     }
   );
 });
