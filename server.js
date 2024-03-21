@@ -239,6 +239,27 @@ app.get("/massagequeue", async (req, res) => {
   );
 });
 
+
+//statusqueue post 
+app.post("/statusqueue", async (req, res) => {
+  const { massagequeueId, status, startTime,endTime,date } = req.body;
+  let todo = [massagequeueId, status, startTime,endTime,date];
+  connection.query(
+    "INSERT INTO `statusqueue` (massagequeueId, status, startTime,endTime,date) value (?,?,?,?,?)",
+    todo,
+    (err, result, fields) => {
+      if (err) {
+        console.log(err);
+        return res.status(400).send();
+      }
+      res
+        .status(200)
+        .json({ message: `create statusqueue sucess id ${result.insertId}` });
+    }
+  );
+});
+
+
 //get statusTime
 app.get("/statusqueue/:id", async (req, res) => {
   connection.query(
@@ -250,12 +271,14 @@ app.get("/statusqueue/:id", async (req, res) => {
   );
 });
 
+
 //get statusTime all
 app.get("/statusqueues", async (req, res) => {
   connection.query("SELECT * FROM statusqueue", (err, result, fields) => {
     res.status(200).json(result);
   });
 });
+
 
 //get one massagequeue
 app.get("/massagequeue/:id", async (req, res) => {
