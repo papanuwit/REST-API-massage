@@ -48,10 +48,10 @@ app.post("/uploadfile", upload.single("file"), (req, res) => {
 
 // register
 app.post("/customers", async (req, res) => {
-  const { email, password, firstname, lastname, age, phonenumber, profile, role } = req.body;
-  let todo = [firstname, lastname, email, password, age, phonenumber, profile, role];
+  const { email, password, firstname, lastname, age, phonenumber, profile, role, gender } = req.body;
+  let todo = [firstname, lastname, email, password, age, phonenumber, profile, role, gender];
 
-  let sql = "INSERT INTO customers(firstname, lastname, email, password, age, phonenumber,profile,role) VALUES (?,?,?,?,?,?,?,?)";
+  let sql = "INSERT INTO customers(firstname, lastname, email, password, age, phonenumber,profile,role,gender) VALUES (?,?,?,?,?,?,?,?,?)";
 
   connection.query(sql, todo, (err, result, fields) => {
     if (err) {
@@ -242,8 +242,8 @@ app.get("/massagequeue", async (req, res) => {
 
 //statusqueue post 
 app.post("/statusqueue", async (req, res) => {
-  const { massagequeueId, status, startTime,endTime,date } = req.body;
-  let todo = [massagequeueId, status, startTime,endTime,date];
+  const { massagequeueId, status, startTime, endTime, date } = req.body;
+  let todo = [massagequeueId, status, startTime, endTime, date];
   connection.query(
     "INSERT INTO `statusqueue` (massagequeueId, status, startTime,endTime,date) value (?,?,?,?,?)",
     todo,
@@ -258,6 +258,27 @@ app.post("/statusqueue", async (req, res) => {
     }
   );
 });
+
+
+//statusqueue update  
+app.put("/statusqueue/:statusqueueId", async (req, res) => {
+  const { status } = req.body;
+  let todo = [status, req.params.statusqueueId];
+  connection.query(
+    "UPDATE  `statusqueue` SET status=? WHERE statusqueueId=?",
+    todo,
+    (err, result, fields) => {
+      if (err) {
+        console.log(err);
+        return res.status(400).send();
+      }
+      res
+        .status(200)
+        .json({ message: `update statusqueue sucess` });
+    }
+  );
+});
+
 
 
 //get statusTime
@@ -346,16 +367,76 @@ app.post("/queuebooking", async (req, res) => {
       }
       res
         .status(200)
-        .json({ message: `create bookingqueue sucess id ${result.insertId}` });
+        .json({ message: `create bookingqueue sucess id ${result.insertId}` ,id:result.insertId});
     }
   );
 });
 
 
+//update bookingqueue payment
+app.put("/queuebooking/:queuebookingId", async (req, res) => {
+  const { payment } =
+    req.body;
+  let todo = [
+    payment,
+    req.params.queuebookingId
+  ];
+  let sql =
+    "UPDATE queuebooking SET payment=? WHERE queuebookingId=?";
+  connection.query(sql, todo, (err, result) => {
+    if (err) {
+      res.status(400).json(result);
+    }
+    return res.json({ message: "update promotion id " + req.params.id });
+  });
+});
+
+
+//save payment
+app.post("/payment", async (req, res) => {
+  const { queuebookingId, profile } =
+    req.body;
+  let todo = [
+    queuebookingId, profile
+  ];
+  connection.query(
+    "INSERT INTO `payment` (queuebookingId, profile) value (?,?)",
+    todo,
+    (err, result) => {
+      if (err) {
+        console.log(err);
+        return res.status(200).json(err);
+      }
+      res
+        .status(200)
+        .json({ message: `create payment sucess id ${result.insertId}` });
+    }
+  );
+});
+
+
+//get payment 
+app.get("/payment/:queuebookingId", async (req, res) => {
+  connection.query(
+    "SELECT * FROM payment WHERE queuebookingId=?",
+    [req.params.queuebookingId],
+    (err, result, fields) => {
+      if (err) {
+        console.log(err);
+        return res.status(200).send();
+      }
+
+      res.status(200).json(...result);
+    }
+  );
+});
+
+
+
 //get bookingqueue from customerId
 app.get("/queuebooking/:id", async (req, res) => {
   connection.query(
-    "SELECT * FROM `queuebooking` WHERE customerId=?",
+    "SELECT * FROM queuebooking WHERE customerId=?",
     [req.params.id],
     (err, result, fields) => {
       if (err) {
@@ -370,7 +451,7 @@ app.get("/queuebooking/:id", async (req, res) => {
 //get bookingqueue all
 app.get("/queuebooking", async (req, res) => {
   connection.query(
-    "SELECT * FROM `queuebooking`",
+    "SELECT * FROM queuebooking,customers WHERE queuebooking.customerId = customers.customerId",
     [req.params.id],
     (err, result, fields) => {
       if (err) {
@@ -384,12 +465,12 @@ app.get("/queuebooking", async (req, res) => {
 
 //promotion
 app.post("/promotion", async (req, res) => {
-  const { title, discount, detail } = req.body;
-  let todo = [title, discount, detail];
+  const { title, discount, detail, profile } = req.body;
+  let todo = [title, discount, detail, profile];
   connection.query(
-    "INSERT INTO `promotion` (title, discount,detail) value (?,?,?)",
+    "INSERT INTO `promotion` (title, discount,detail,profile) value (?,?,?,?)",
     todo,
-    (err, result, fields) => {
+    (err, result) => {
       if (err) {
         return res.status(400).send();
       }
@@ -399,6 +480,7 @@ app.post("/promotion", async (req, res) => {
     }
   );
 });
+
 
 //get all promotion
 app.get("/promotion", async (req, res) => {
@@ -525,7 +607,7 @@ app.put("/review/:id", async (req, res) => {
 });
 
 
-//ดึงโปรไฟล์ที่คล้ายกัน
+//ดึงโปรไฟล์ที่คล้ายกัน แนะนำ AI 
 app.get("/recomandtaion/:age/:gender", async (req, res) => {
   let query = "";
 
@@ -540,9 +622,6 @@ app.get("/recomandtaion/:age/:gender", async (req, res) => {
     query = "SELECT customerId,age,gender FROM customers WHERE age BETWEEN 36 AND 45";
   } else if (age >= 46 && age <= 60) {
     query = "SELECT customerId,age,gender FROM customers WHERE age BETWEEN 46 AND 60";
-  } else {
-    query = "SELECT customerId,age,gender FROM customers WHERE age =? AND gender=?";
-
   }
 
   connection.query(
